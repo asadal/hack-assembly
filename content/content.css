@@ -1,0 +1,65 @@
+/**
+ * content/content.css
+ * Styles for the content script
+ */
+
+/* 폰트 정의 */
+@font-face {
+    font-family: "Paperlogy-6SemiBold";
+    src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2")
+        format("woff2");
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Paperlogy-4Regular";
+    src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2")
+        format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Subtitle container */
+#hack_title {
+    font-family:
+        "Paperlogy-4Regular",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        "Open Sans",
+        "Helvetica Neue",
+        sans-serif;
+    padding: 10px;
+    line-height: 1.5;
+}
+
+/* Subtitle paragraphs */
+#hack_title p {
+    padding: 5px 8px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+/* Alternate row backgrounds */
+#hack_title p:nth-child(odd) {
+    background-color: #f5f5f5;
+}
+
+/* Hover effect */
+#hack_title p:hover {
+    background-color: #e0e7ff;
+}
+
+/* Timestamp style */
+#hack_title p span {
+    display: block;
+    margin-bottom: 2px;
+    opacity: 0.7;
+    font-weight: 400;
+}

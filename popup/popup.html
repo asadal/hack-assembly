@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="detached-window" content="false" />
+        <title>Hack Assembly</title>
+        <link rel="stylesheet" href="popup.css" />
+        <!-- Only load utils.js once -->
+        <script src="../common/utils.js"></script>
+    </head>
+    <body class="light-mode">
+        <header>
+            <h1>Hack Assembly</h1>
+            <div class="header-controls">
+                <div class="session-selector">
+                    <select id="session-select" title="세션 선택">
+                        <option value="default">기본 세션</option>
+                    </select>
+                    <button
+                        id="new-session-button"
+                        title="새 세션 생성"
+                        class="icon-button"
+                    >
+                        +
+                    </button>
+                </div>
+                <button id="pin-button" title="창 고정" class="icon-button">
+                    <img src="../icons/pin.svg" alt="Pin" />
+                </button>
+            </div>
+        </header>
+
+        <div class="search-bar">
+            <div class="search-container">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="자막 내용 검색..."
+                />
+                <button id="search-button" class="icon-button">
+                    <img src="../icons/search.svg" alt="검색" />
+                </button>
+            </div>
+            <button id="filter-button" title="필터 표시" class="icon-button">
+                <img src="../icons/filter.svg" alt="필터" />
+            </button>
+        </div>
+
+        <div id="filter-panel" class="hidden">
+            <div class="filter-group">
+                <label for="filter-time-start">시작 시간:</label>
+                <input type="time" id="filter-time-start" step="1" />
+            </div>
+            <div class="filter-group">
+                <label for="filter-time-end">종료 시간:</label>
+                <input type="time" id="filter-time-end" step="1" />
+            </div>
+            <div class="filter-group">
+                <label for="filter-keyword">키워드:</label>
+                <input type="text" id="filter-keyword" />
+            </div>
+            <div class="filter-actions">
+                <button id="filter-apply" class="small-button">적용</button>
+                <button id="filter-reset" class="small-button">초기화</button>
+            </div>
+        </div>
+
+        <main>
+            <div class="controls top-controls">
+                <button id="start-button" class="primary-button">시작</button>
+                <button id="stop-button" class="secondary-button" disabled>
+                    중지
+                </button>
+                <div class="toggle-container" title="자동 스크롤">
+                    <input
+                        type="checkbox"
+                        id="auto-scroll-toggle"
+                        class="toggle-checkbox"
+                        checked
+                    />
+                    <label for="auto-scroll-toggle" class="toggle-label">
+                        <img src="../icons/scroll.svg" alt="자동 스크롤" />
+                    </label>
+                </div>
+            </div>
+
+            <div id="subtitle-container">
+                <div id="subtitles"></div>
+            </div>
+
+            <div class="controls bottom-controls">
+                <div class="left-controls">
+                    <button id="reset-button" class="text-button">
+                        <img src="../icons/reset.svg" alt="초기화" />
+                        초기화
+                    </button>
+                    <div class="dropdown">
+                        <button id="save-button" class="text-button">
+                            <img src="../icons/save.svg" alt="저장" />
+                            저장
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#" id="save-txt">TXT 저장</a>
+                            <a href="#" id="save-srt">SRT 저장</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="right-controls">
+                    <div class="theme-toggle">
+                        <button id="light-mode" class="icon-button active">
+                            <img src="../icons/light.svg" alt="라이트 모드" />
+                        </button>
+                        <button id="dark-mode" class="icon-button">
+                            <img src="../icons/dark.svg" alt="다크 모드" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Template for subtitle items -->
+        <template id="subtitle-template">
+            <div class="subtitle-item">
+                <div class="subtitle-timestamp"></div>
+                <div class="subtitle-text"></div>
+            </div>
+        </template>
+
+        <!-- Dialog for creating a new session -->
+        <div id="session-dialog" class="dialog hidden">
+            <div class="dialog-content">
+                <h2>새 세션 만들기</h2>
+                <div class="dialog-form">
+                    <label for="session-name">세션 이름:</label>
+                    <input
+                        type="text"
+                        id="session-name"
+                        placeholder="세션 이름을 입력하세요"
+                    />
+                </div>
+                <div class="dialog-buttons">
+                    <button id="session-cancel" class="secondary-button">
+                        취소
+                    </button>
+                    <button id="session-create" class="primary-button">
+                        생성
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load scripts in the correct order -->
+        <!-- First load all manager scripts -->
+        <script src="subtitles.js"></script>
+        <script src="sessions.js"></script>
+        <script src="search.js"></script>
+        <script src="ui.js"></script>
+
+        <!-- Then load the main popup script that uses them -->
+        <script src="popup.js"></script>
+    </body>
+</html>

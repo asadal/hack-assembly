@@ -1,0 +1,532 @@
+/* 폰트 정의 */
+@font-face {
+    font-family: "Paperlogy-6SemiBold";
+    src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2")
+        format("woff2");
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Paperlogy-4Regular";
+    src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2")
+        format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Reset and Fonts */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family:
+        "Paperlogy-4Regular",
+        "Pretendard",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        "Open Sans",
+        "Helvetica Neue",
+        sans-serif;
+}
+
+/* Theme Variables */
+:root {
+    --primary-color: #3b82f6;
+    --secondary-color: #6b7280;
+    --background-color: #ffffff;
+    --text-color: #1f2937;
+    --border-color: #e5e7eb;
+    --container-bg: #f3f4f6;
+    --hover-color: #dbeafe;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --timestamp-color: #6b7280;
+    --dialog-bg: #ffffff;
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    --highlight-color: #fef08a;
+}
+
+.dark-mode {
+    --primary-color: #60a5fa;
+    --secondary-color: #9ca3af;
+    --background-color: #1f2937;
+    --text-color: #f9fafb;
+    --border-color: #374151;
+    --container-bg: #111827;
+    --hover-color: #2563eb;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --timestamp-color: #9ca3af;
+    --dialog-bg: #1f2937;
+    --overlay-bg: rgba(0, 0, 0, 0.7);
+    --highlight-color: #854d0e;
+}
+
+/* Base Styles */
+body {
+    width: 380px;
+    height: 550px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 타이틀 폰트 변경 */
+h1 {
+    font-size: 18px;
+    font-weight: 600;
+    font-family: "Paperlogy-6SemiBold", sans-serif;
+}
+
+h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    font-family: "Paperlogy-6SemiBold", sans-serif;
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.top-controls {
+    margin-bottom: 8px;
+}
+
+.bottom-controls {
+    margin-top: auto;
+    justify-content: space-between;
+}
+
+.left-controls,
+.right-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Buttons */
+button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+.primary-button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 20px;
+    font-weight: 500;
+}
+
+.primary-button:hover {
+    opacity: 0.9;
+}
+
+.primary-button:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.secondary-button {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 8px 20px;
+    font-weight: 500;
+}
+
+.secondary-button:hover {
+    opacity: 0.9;
+}
+
+.secondary-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.small-button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.small-button:hover {
+    opacity: 0.9;
+}
+
+.text-button {
+    background-color: transparent;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+}
+
+.text-button:hover {
+    background-color: var(--hover-color);
+}
+
+.text-button img {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-button {
+    background-color: transparent;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.icon-button:hover {
+    background-color: var(--hover-color);
+}
+
+.icon-button img {
+    width: 18px;
+    height: 18px;
+}
+
+.icon-button.active {
+    background-color: var(--hover-color);
+}
+
+/* Subtitle Container */
+#subtitle-container {
+    flex: 1;
+    background-color: var(--container-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+#subtitles {
+    height: 100%;
+    overflow-y: auto;
+    padding: 12px;
+    scroll-behavior: smooth;
+}
+
+/* Subtitle Items */
+.subtitle-item {
+    margin-bottom: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+.subtitle-item:hover {
+    background-color: var(--hover-color);
+}
+
+.subtitle-timestamp {
+    font-size: 12px;
+    color: var(--timestamp-color);
+    margin-bottom: 2px;
+}
+
+.subtitle-text {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.highlight {
+    background-color: var(--highlight-color);
+}
+
+/* Theme toggle */
+.theme-toggle {
+    display: flex;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: var(--container-bg);
+}
+
+.theme-toggle button {
+    border-radius: 0;
+}
+
+/* Search Bar */
+.search-bar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-container {
+    flex: 1;
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#search-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: none;
+    outline: none;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+/* Filter Panel */
+#filter-panel {
+    padding: 12px 16px;
+    background-color: var(--container-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-group label {
+    font-size: 12px;
+    color: var(--secondary-color);
+}
+
+.filter-group input {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+.filter-actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* Session Selector */
+.session-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#session-select {
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+/* Dialog */
+.dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--overlay-bg);
+    z-index: 1000;
+}
+
+.dialog-content {
+    width: 300px;
+    padding: 20px;
+    background-color: var(--dialog-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.dialog-form {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dialog-form label {
+    font-size: 14px;
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+.dialog-form input {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Toggle Switch */
+.toggle-container {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-checkbox {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.toggle-checkbox:checked + .toggle-label {
+    background-color: var(--hover-color);
+    opacity: 1;
+}
+
+.toggle-checkbox:not(:checked) + .toggle-label {
+    opacity: 0.6;
+}
+
+.toggle-label:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .toggle-label:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 토글 레이블 내의 이미지 스타일 */
+.toggle-label img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: brightness(0.8); /* 아이콘이 너무 밝을 경우 약간 어둡게 */
+}
+
+/* 다크 모드에서 아이콘 색상 조정 */
+.dark-mode .toggle-label img {
+    filter: brightness(1.2); /* 다크 모드에서는 약간 밝게 */
+}
+
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background-color: var(--background-color);
+    min-width: 120px;
+    box-shadow: var(--shadow);
+    z-index: 1;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content a {
+    color: var(--text-color);
+    padding: 8px 12px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--hover-color);
+}
+
+/* Utils */
+.hidden {
+    display: none !important;
+}
+
+/* 오류 메시지 */
+.error-message {
+    font-family: "Paperlogy-4Regular", sans-serif;
+}
