@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "description": "국회 의사중계시스템의 AI 자막을 추출하고 저장하는 확장 프로그램",
   "permissions": ["activeTab", "storage", "scripting", "tabs", "notifications"],
-  "host_permissions": ["*://w3.assembly.go.kr/vod/*"],
+  "host_permissions": [
+    "*://w3.assembly.go.kr/vod/*",
+    "*://assembly.webcast.go.kr/main/*"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -22,7 +25,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://w3.assembly.go.kr/vod/*"],
+      "matches": [
+        "*://w3.assembly.go.kr/vod/*",
+        "*://assembly.webcast.go.kr/main/*",
+        "*://assembly.webcast.go.kr/main/pressplayer.asp*"
+      ],
       "js": [
         "common/utils.js",
         "content/timestamp.js",
@@ -30,7 +37,7 @@
         "content/content.js"
       ],
       "css": ["content/content.css"],
-      "run_at": "document_idle"
+      "run_at": "document_end"
     }
   ],
   "icons": {
@@ -61,7 +68,7 @@
   "web_accessible_resources": [
     {
       "resources": ["icons/*"],
-      "matches": ["*://w3.assembly.go.kr/*"]
+      "matches": ["*://w3.assembly.go.kr/*", "*://assembly.webcast.go.kr/*"]
     }
   ]
 }
