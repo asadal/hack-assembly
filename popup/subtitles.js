@@ -124,15 +124,9 @@ class SubtitleManager {
       return timeA - timeB;
     });
 
-    // Format each subtitle
+    // Format each subtitle - 시간 정보 없이 텍스트만 저장
     sortedIds.forEach((id) => {
-      if (this.timestamps[id]) {
-        const timestamp = new Date(this.timestamps[id]);
-        const formattedTime = utils.formatTimestamp(timestamp);
-        content += `[${formattedTime}] ${this.subtitles[id]}\n\n`;
-      } else {
-        content += `${this.subtitles[id]}\n\n`;
-      }
+      content += `${this.subtitles[id]}\n\n`;
     });
 
     // Generate filename with date and session ID
