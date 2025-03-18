@@ -836,37 +836,101 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
     closeButton.style.cursor = "pointer";
     closeButton.style.boxShadow = "0 1px 3px rgba(0,0,0,0.12)";
     
-    // 버튼 호버 효과
-    closeButton.onmouseover = () => {
-      closeButton.style.backgroundColor = "#3b82f6";
-      closeButton.style.color = "white";
-    };
-    closeButton.onmouseout = () => {
-      if (container.style.height !== "30px") {
-        closeButton.style.backgroundColor = "#ffffff";
-        closeButton.style.color = "#3b82f6";
-      } else {
-        closeButton.style.backgroundColor = "#3b82f6";
-        closeButton.style.color = "white";
-      }
+    // 고정된 버튼을 위한 별도 컨테이너
+    const fixedButtonContainer = document.createElement("div");
+    fixedButtonContainer.id = "hack_title_fixed_button";
+    fixedButtonContainer.style.position = "fixed";
+    fixedButtonContainer.style.top = "10px";
+    fixedButtonContainer.style.right = "10px";
+    fixedButtonContainer.style.zIndex = "9999";
+    fixedButtonContainer.style.display = "none"; // 처음에는 숨김
+    fixedButtonContainer.style.backgroundColor = "rgba(59, 130, 246, 0.9)"; // 파란색 배경
+    fixedButtonContainer.style.borderRadius = "4px";
+    fixedButtonContainer.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.3)";
+    fixedButtonContainer.style.padding = "5px 10px";
+    
+    // 고정된 버튼 생성
+    const fixedButton = document.createElement("button");
+    fixedButton.innerText = closeButton.innerText; // 원래 버튼과 동일한 텍스트로 시작
+    fixedButton.style.padding = "3px 8px";
+    fixedButton.style.fontSize = "12px";
+    fixedButton.style.backgroundColor = "#ffffff";
+    fixedButton.style.border = "1px solid #3b82f6";
+    fixedButton.style.borderRadius = "4px";
+    fixedButton.style.color = "#3b82f6";
+    fixedButton.style.fontWeight = "bold";
+    fixedButton.style.cursor = "pointer";
+    fixedButton.style.boxShadow = "0 1px 3px rgba(0,0,0,0.12)";
+    
+    fixedButtonContainer.appendChild(fixedButton);
+    document.body.appendChild(fixedButtonContainer);
+    
+    // 버튼 호버 효과 함수
+    const applyHoverEffect = (button) => {
+      button.onmouseover = () => {
+        button.style.backgroundColor = "#3b82f6";
+        button.style.color = "white";
+      };
+      button.onmouseout = () => {
+        if (container.style.height !== "30px") {
+          button.style.backgroundColor = "#ffffff";
+          button.style.color = "#3b82f6";
+        } else {
+          button.style.backgroundColor = "#3b82f6";
+          button.style.color = "white";
+        }
+      };
     };
     
-    closeButton.onclick = () => {
-      // 설정에 따라 컨테이너 토글
+    // 두 버튼에 호버 효과 적용
+    applyHoverEffect(closeButton);
+    applyHoverEffect(fixedButton);
+    
+    // 토글 함수 정의
+    const toggleContainer = () => {
       if (container.style.height === "30px") {
         container.style.height = "auto";
         container.style.maxHeight = "200px";
         closeButton.innerText = "숨기기";
+        fixedButton.innerText = "숨기기";
         closeButton.style.backgroundColor = "#ffffff";
+        fixedButton.style.backgroundColor = "#ffffff";
         closeButton.style.color = "#3b82f6";
+        fixedButton.style.color = "#3b82f6";
       } else {
         container.style.height = "30px";
         container.style.overflow = "hidden";
         closeButton.innerText = "펼치기";
+        fixedButton.innerText = "펼치기";
         closeButton.style.backgroundColor = "#3b82f6";
+        fixedButton.style.backgroundColor = "#3b82f6";
         closeButton.style.color = "white";
+        fixedButton.style.color = "white";
       }
     };
+    
+    // 두 버튼에 클릭 이벤트 추가
+    closeButton.onclick = toggleContainer;
+    fixedButton.onclick = toggleContainer;
+    
+    // 스크롤 이벤트 리스너 추가
+    window.addEventListener('scroll', () => {
+      // 컨테이너가 화면에 표시되는지 확인
+      const containerRect = container.getBoundingClientRect();
+      
+      if (containerRect.top < 0 && containerRect.bottom > 0) {
+        // 컨테이너가 아직 화면에 부분적으로 보이는 경우 (상단만 스크롤됨)
+        fixedButtonContainer.style.display = "none";
+      } else if (containerRect.bottom <= 0 || containerRect.top >= window.innerHeight) {
+        // 컨테이너가 완전히 화면에서 벗어난 경우
+        fixedButtonContainer.style.display = "block";
+      } else {
+        // 컨테이너가 화면에 완전히 보이는 경우
+        fixedButtonContainer.style.display = "none";
+      }
+    });
+    
+    // 버튼을 header에 추가
     header.appendChild(closeButton);
     
     // 내용 컨테이너 추가
