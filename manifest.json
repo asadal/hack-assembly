@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Hack Assembly",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "국회 의사중계시스템의 AI 자막을 추출하고 저장하는 확장 프로그램",
   "permissions": ["activeTab", "storage", "scripting", "tabs", "notifications"],
   "host_permissions": [
@@ -28,7 +28,8 @@
       "matches": [
         "*://w3.assembly.go.kr/vod/*",
         "*://assembly.webcast.go.kr/main/*",
-        "*://assembly.webcast.go.kr/main/pressplayer.asp*"
+        "*://assembly.webcast.go.kr/main/pressplayer.asp*",
+        "*://assembly.webcast.go.kr/main/player.asp*"
       ],
       "js": [
         "common/utils.js",

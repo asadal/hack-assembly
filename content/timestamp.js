@@ -144,4 +144,13 @@ class TimestampManager {
 
 // Create and export the timestamp manager instance
 const timestampManager = new TimestampManager();
-this.timestampManager = timestampManager;
+
+// 전역 객체에 할당
+window.timestampManager = timestampManager;
+
+// 호환성을 위해 this에도 할당 (에러가 나지 않도록 try/catch로 감싸기)
+try {
+  this.timestampManager = timestampManager;
+} catch (error) {
+  console.log("this에 timestampManager 할당 중 오류:", error);
+}

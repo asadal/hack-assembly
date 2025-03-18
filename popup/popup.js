@@ -152,6 +152,41 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// 매니저 인스턴스 초기화
+function initializeManagers() {
+  try {
+    // 순서대로 초기화 (의존성 고려)
+    if (typeof SessionManager !== "undefined") {
+      sessionManager = new SessionManager();
+    } else {
+      console.error("SessionManager 클래스를 찾을 수 없습니다");
+    }
+
+    if (typeof SubtitleManager !== "undefined") {
+      subtitleManager = new SubtitleManager();
+    } else {
+      console.error("SubtitleManager 클래스를 찾을 수 없습니다");
+    }
+
+    if (typeof SearchManager !== "undefined") {
+      searchManager = new SearchManager();
+    } else {
+      console.error("SearchManager 클래스를 찾을 수 없습니다");
+    }
+
+    if (typeof UIManager !== "undefined") {
+      uiManager = new UIManager();
+    } else {
+      console.error("UIManager 클래스를 찾을 수 없습니다");
+    }
+
+    console.log("매니저 초기화 완료");
+  } catch (error) {
+    console.error("매니저 초기화 중 오류:", error);
+    throw error;
+  }
+}
+
 /**
  * Shows a detached window indicator
  */

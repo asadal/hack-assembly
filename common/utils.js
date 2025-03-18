@@ -131,51 +131,37 @@ if (typeof window.utils === "undefined") {
    * @param {Function} callback - 응답을 처리할 콜백 함수
    */
   window.utils.sendMessageToActiveTab = function (message, callback) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (!tabs || tabs.length === 0) {
-        console.log("활성 탭을 찾을 수 없음");
-        if (callback) callback(null);
-        return;
-      }
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs || tabs.length === 0) {
+          console.log("활성 탭을 찾을 수 없음");
+          if (callback)
+            callback({ success: false, error: "활성 탭을 찾을 수 없습니다." });
+          return;
+        }
 
-      try {
-        // 먼저 콘텐츠 스크립트가 로드되었는지 확인
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          { action: "ping" },
-          function (pingResponse) {
-            // 마지막 오류 확인
-            const lastError = chrome.runtime.lastError;
+        // 메시지 직접 전송 시도
+        chrome.tabs.sendMessage(tabs[0].id, message, (response) => {
+          // 마지막 오류 확인
+          const lastError = chrome.runtime.lastError;
 
-            if (lastError) {
-              console.log(
-                "콘텐츠 스크립트가 로드되지 않음:",
-                lastError.message,
-              );
-              if (callback) callback(null);
-              return;
-            }
+          if (lastError) {
+            console.log("메시지 전송 오류:", lastError.message);
 
-            // 핑에 응답했으면 실제 메시지 전송
-            chrome.tabs.sendMessage(tabs[0].id, message, (response) => {
-              if (chrome.runtime.lastError) {
-                console.log(
-                  "메시지 전송 오류:",
-                  chrome.runtime.lastError.message,
-                );
-                if (callback) callback(null);
-                return;
-              }
+            // 오류가 발생했지만 콜백이 있으면 실패 상태로 호출
+            if (callback)
+              callback({ success: false, error: lastError.message });
+            return;
+          }
 
-              if (callback) callback(response);
-            });
-          },
-        );
-      } catch (error) {
-        console.error("메시지 전송 중 예외:", error);
-        if (callback) callback(null);
-      }
-    });
+          // 정상 응답 처리
+          if (callback) callback(response || { success: true });
+        });
+      });
+    } catch (error) {
+      console.error("메시지 전송 중 예외:", error);
+      if (callback) callback({ success: false, error: error.message });
+    }
   };
 
   /**

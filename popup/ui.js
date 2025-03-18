@@ -79,44 +79,53 @@ class UIManager {
   }
 
   /**
-   * Toggle start/pause
+   * 시작/일시중지 토글
    */
   toggleStartPause() {
     if (!this.isRunning) {
       // 시작하기 전에 콘텐츠 스크립트 가용성 확인
-      chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (!tabs || tabs.length === 0) {
           console.error("활성 탭을 찾을 수 없습니다.");
           alert("활성 탭을 찾을 수 없습니다.");
           return;
         }
 
-        // 콘텐츠 스크립트 가용성 확인
-        const isAvailable = await utils.isContentScriptAvailable(tabs[0].id);
-        if (!isAvailable) {
-          console.error("이 페이지에서는 자막 추출을 사용할 수 없습니다.");
-          alert("이 페이지에서는 자막 추출을 사용할 수 없습니다.");
-          return;
-        }
-
-        // 여기부터는 기존 코드 진행
+        // 상태 변경을 먼저 적용하고 메시지 전송
         this.isRunning = true;
         this.isPaused = false;
         this.startButton.textContent = "일시중지";
         this.stopButton.disabled = false;
 
-        utils.sendMessageToActiveTab({ action: "startCapture" }, (response) => {
-          if (!response) {
-            console.error("자막 추출 시작에 실패했습니다.");
-            // 상태 되돌리기
-            this.isRunning = false;
-            this.startButton.textContent = "시작";
-            this.stopButton.disabled = true;
-          }
-        });
-
         // 상태 저장
         this.saveState();
+
+        // 메시지 전송 (새로운 함수 사용)
+        utils.sendMessageToActiveTab({ action: "startCapture" }, (response) => {
+          if (!response || !response.success) {
+            console.error(
+              "자막 추출 시작에 실패했습니다:",
+              response ? response.error : "응답 없음",
+            );
+
+            // 추출 시작에 실패하면 사용자에게 알림
+            if (
+              confirm(
+                "자막 추출을 시작할 수 없습니다. 페이지가 새로고침된 경우 확장 프로그램을 다시 로드해야 할 수 있습니다. 페이지를 새로고침하시겠습니까?",
+              )
+            ) {
+              chrome.tabs.reload(tabs[0].id);
+            } else {
+              // 상태 되돌리기
+              this.isRunning = false;
+              this.startButton.textContent = "시작";
+              this.stopButton.disabled = true;
+              this.saveState();
+            }
+          } else {
+            console.log("자막 추출 시작됨");
+          }
+        });
       });
     } else {
       // 토글 일시정지
@@ -128,8 +137,14 @@ class UIManager {
           action: this.isPaused ? "pauseCapture" : "resumeCapture",
         },
         (response) => {
-          if (!response) {
-            console.error("자막 추출 상태 변경에 실패했습니다.");
+          if (!response || !response.success) {
+            console.error(
+              "자막 추출 상태 변경에 실패했습니다:",
+              response ? response.error : "응답 없음",
+            );
+            alert(
+              "자막 추출 상태 변경에 실패했습니다. 페이지를 새로고침한 후 다시 시도해 주세요.",
+            );
           }
         },
       );
