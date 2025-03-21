@@ -18,7 +18,6 @@ class SubtitleCapture {
     this.sessionId = "default";
   }
 
-  // SubtitleCapture 클래스 내부에 메서드로 추가
   /**
    * Date 객체를 SRT 형식의 시간 문자열로 변환
    * @param {Date} date - 변환할 Date 객체
@@ -31,12 +30,8 @@ class SubtitleCapture {
     }
 
     try {
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const seconds = String(date.getSeconds()).padStart(2, "0");
-      const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
-
-      return `${hours}:${minutes}:${seconds},${milliseconds}`;
+      // utils의 formatSrtTimestamp 함수 사용
+      return utils.formatSrtTimestamp(date);
     } catch (error) {
       console.error("SRT 시간 형식 변환 오류:", error);
       return "00:00:00,000";
@@ -83,20 +78,23 @@ class SubtitleCapture {
     }
     // 추가: assembly.go.kr 도메인의 다른 페이지들 허용
     else if (currentURL.includes("assembly.go.kr")) {
-      videoContainer = document.querySelector("video") || 
-                      document.querySelector("iframe") || 
-                      document.body; // 최후의 수단으로 body 사용
+      videoContainer =
+        document.querySelector("video") ||
+        document.querySelector("iframe") ||
+        document.body; // 최후의 수단으로 body 사용
       isValidPage = true; // 도메인이 맞으면 일단 허용
     }
 
     // 적절한 페이지가 아닌 경우에도 덜 제한적으로 동작
     if (!isValidPage) {
-      console.warn("Hack Assembly: 국회 의사중계시스템 페이지가 아니지만 계속 진행합니다.");
+      console.warn(
+        "Hack Assembly: 국회 의사중계시스템 페이지가 아니지만 계속 진행합니다.",
+      );
       utils.showNotification(
         "국회 웹사이트로 이동하여 자막 추출을 사용하세요: assembly.webcast.go.kr",
         "info",
       );
-      
+
       // 어떤 페이지든 body는 있으므로 최소한의 컨테이너로 사용
       videoContainer = document.body;
     }
@@ -206,23 +204,42 @@ class SubtitleCapture {
         document.querySelector(".media_wrap") ||
         document.querySelector(".player_area");
       if (videoContainer) isValidPage = true;
-    } 
+    }
     // 추가: assembly.go.kr 도메인의 다른 페이지들 허용
     else if (currentURL.includes("assembly.go.kr")) {
-      videoContainer = document.querySelector("video") || 
-                      document.querySelector("iframe") || 
-                      document.body; // 최후의 수단으로 body 사용
+      videoContainer =
+        document.querySelector("video") ||
+        document.querySelector("iframe") ||
+        document.body; // 최후의 수단으로 body 사용
       isValidPage = true; // 도메인이 맞으면 일단 허용
     }
 
     // 적절한 페이지가 아닌 경우에도 덜 제한적으로 동작
     if (!isValidPage) {
-      console.warn("Hack Assembly: 국회 의사중계시스템 페이지가 아니지만 계속 진행합니다.");
-      utils.showNotification(
-        "국회 웹사이트로 이동하여 자막 추출을 사용하세요: assembly.webcast.go.kr",
-        "info",
+      console.warn(
+        "Hack Assembly: 국회 의사중계시스템 페이지가 아니지만 계속 진행합니다.",
       );
       
+      try {
+        // utils 객체가 존재하는지 안전하게 확인하고 호출
+        if (window.utils && typeof window.utils.showNotification === 'function') {
+          window.utils.showNotification(
+            "국회 웹사이트로 이동하여 자막 추출을 사용하세요: assembly.webcast.go.kr",
+            "info",
+          );
+        } else {
+          console.warn("utils 객체를 찾을 수 없어 알림을 표시할 수 없습니다.");
+          // 크롬 확장 API 직접 사용 시도
+          chrome.runtime.sendMessage({
+            action: "showNotification",
+            message: "국회 웹사이트로 이동하여 자막 추출을 사용하세요: assembly.webcast.go.kr",
+            type: "info",
+          });
+        }
+      } catch (e) {
+        console.error("알림 메시지 전송 실패:", e);
+      }
+
       // 어떤 페이지든 body는 있으므로 최소한의 컨테이너로 사용
       videoContainer = document.body;
     }
@@ -491,30 +508,90 @@ class SubtitleCapture {
 
   /**
    * 현재 세션 데이터 저장
+   * 확장 프로그램 컨텍스트 무효화 오류 처리 추가
    */
   saveSessionData() {
-    // 타임스탬프 객체 존재 여부 확인 (fixed: additional safety check)
-    const timestamps = window.timestampManager && typeof window.timestampManager === 'object' && window.timestampManager.timestamps
-      ? window.timestampManager.timestamps
-      : {};
+    try {
+      // 타임스탬프 객체 존재 여부 확인 (안전한 접근)
+      let timestamps = {};
+      let durations = {};
 
-    const durations = window.timestampManager && typeof window.timestampManager === 'object' && window.timestampManager.durations
-      ? window.timestampManager.durations
-      : {};
+      // window.timestampManager가 존재하는지 확인
+      if (
+        window.timestampManager &&
+        typeof window.timestampManager === "object"
+      ) {
+        // timestamps 속성이 존재하는지 확인
+        if (window.timestampManager.timestamps) {
+          timestamps = window.timestampManager.timestamps;
+        }
 
-    chrome.storage.local.set({
-      [`session_${this.sessionId}`]: {
-        subtitles: this.subtitles,
-        timestamps: timestamps,
-        durations: durations,
-      },
-    });
+        // durations 속성이 존재하는지 확인
+        if (window.timestampManager.durations) {
+          durations = window.timestampManager.durations;
+        }
+      }
+
+      // 확장 프로그램 컨텍스트 유효성 검사
+      if (typeof chrome === 'undefined' || typeof chrome.runtime === 'undefined' || typeof chrome.storage === 'undefined') {
+        console.warn("확장 프로그램 컨텍스트가 유효하지 않음, 저장 건너뜀");
+        return;
+      }
+
+      // 세션 데이터를 스토리지에 저장
+      chrome.storage.local.set(
+        {
+          [`session_${this.sessionId}`]: {
+            subtitles: this.subtitles,
+            timestamps: timestamps,
+            durations: durations,
+          },
+        },
+        () => {
+          // 저장 완료 후 chrome.runtime.lastError 확인
+          if (chrome.runtime && chrome.runtime.lastError) {
+            console.warn(
+              "세션 데이터 저장 중 오류:",
+              chrome.runtime.lastError.message,
+            );
+            return;
+          }
+
+          console.log(
+            `세션 데이터 저장 완료: ${this.sessionId}, 자막 수: ${Object.keys(this.subtitles).length}`,
+          );
+        },
+      );
+    } catch (error) {
+      console.error("세션 데이터 저장 중 오류 발생:", error);
+
+      // extension context invalidated 오류인 경우 특별 처리
+      if (
+        error.message &&
+        error.message.includes("Extension context invalidated")
+      ) {
+        console.warn(
+          "확장 프로그램 컨텍스트가 무효화되었습니다. 새로고침이 필요할 수 있습니다.",
+        );
+
+        // 로컬 스토리지에 임시 저장 시도 (fallback)
+        try {
+          const tempData = JSON.stringify({
+            subtitles: this.subtitles,
+            timestamp: new Date().toISOString(),
+            sessionId: this.sessionId,
+          });
+          localStorage.setItem("hack_assembly_temp_data", tempData);
+          console.log("자막 데이터를 로컬 스토리지에 임시 저장했습니다.");
+        } catch (localStorageError) {
+          console.error("로컬 스토리지 저장 실패:", localStorageError);
+        }
+      }
+    }
   }
 
-
   /**
-   * 자막 캡처
-   * Fixed to properly handle missing container and ensure updateSubtitleContainer exists
+   * 자막 캡처 - 중복 자막 및 "로딩중.." 문제 해결
    */
   captureSubtitles() {
     try {
@@ -522,52 +599,12 @@ class SubtitleCapture {
       const currentURL = window.location.href;
       let subtitleElements = [];
 
-      // player.asp 페이지 처리 추가
-      if (currentURL.includes("assembly.webcast.go.kr/main/player.asp")) {
-        // 가능한 자막 요소 선택자 시도
-        subtitleElements = document.querySelectorAll("#viewSubtit .smi_word");
+      // 특히 #viewSubtit 영역 자막 처리를 위한 변수들
+      let viewSubtitElements = document.querySelectorAll(
+        "#viewSubtit .smi_word",
+      );
 
-        if (subtitleElements.length === 0) {
-          subtitleElements = document.querySelectorAll(
-            ".caption_area .caption_text"
-          );
-        }
-
-        if (subtitleElements.length === 0) {
-          subtitleElements = document.querySelectorAll(
-            "[class*='subtitle'], [class*='caption']"
-          );
-        }
-      }
-      // 기존 pressplayer.asp 페이지 처리
-      else if (
-        currentURL.includes("assembly.webcast.go.kr/main/pressplayer.asp")
-      ) {
-        // 기존 사이트의 자막 요소 선택
-        subtitleElements = document.querySelectorAll("#viewSubtit .smi_word");
-      } else if (currentURL.includes("assembly.webcast.go.kr/main/")) {
-        // 새 사이트의 자막 요소 선택 (가능한 선택자들 시도)
-        subtitleElements = document.querySelectorAll(
-          ".subtitle_wrap .subtitle_text"
-        );
-
-        if (subtitleElements.length === 0) {
-          subtitleElements = document.querySelectorAll(
-            ".subtitles-container .subtitle-item"
-          );
-        }
-
-        if (subtitleElements.length === 0) {
-          subtitleElements = document.querySelectorAll("[class*='subtitle']");
-        }
-      }
-
-      if (subtitleElements.length === 0) {
-        console.log("자막 요소를 찾을 수 없습니다.");
-        return;
-      }
-
-      // 컨테이너 확인
+      // 자막 컨테이너 확인
       const container = document.querySelector("#hack_title");
       if (!container) {
         console.log("자막 컨테이너를 찾을 수 없습니다. 다시 생성합니다.");
@@ -577,77 +614,137 @@ class SubtitleCapture {
         return;
       }
 
-      // 각 자막 요소 처리
-      subtitleElements.forEach((element) => {
-        let id, text;
-
-        // pressplayer.asp나 w3.assembly.go.kr/vod/ 페이지 처리
-        if (element.className && element.className.includes("smi_word")) {
+      // #viewSubtit 영역 자막 처리 (개선된 방식)
+      if (viewSubtitElements && viewSubtitElements.length > 0) {
+        viewSubtitElements.forEach((element) => {
           // 원본 코드와 동일한 방식으로 ID 생성
-          id = element.className.replace("smi_word ", "");
+          const id = element.className.replace("smi_word ", "");
 
-          // 줄바꿈 문제 해결: 원본 텍스트를 가져와 줄바꿈 제거
-          text = element.innerText;
-          // 줄바꿈 제거 및 공백 정리 (줄바꿈을 공백으로 대체)
-          text = text.replace(/\r?\n|\r/g, " ").trim();
-          // 연속된 공백을 하나로 합치기
-          text = text.replace(/\s+/g, " ");
-        } else {
-          // 다른 사이트에서는 내용 기반으로 ID 생성
-          text = element.innerText;
-          // 줄바꿈 제거 및 공백 처리
-          text = text.replace(/\r?\n|\r/g, " ").trim();
-          text = text.replace(/\s+/g, " ");
+          // 자막 텍스트 가져오기
+          let text = element.innerText;
 
-          // ID 생성
-          id = "subtitle_" + text.trim().replace(/\s+/g, "_").substring(0, 20);
-        }
+          // "로딩중.." 텍스트 제거
+          text = text.replace(/^로딩중\.\.\s*/g, "");
 
-        // 자막이 비어있지 않은 경우만 처리
-        if (text && text.trim().length > 0) {
-          // 새 자막인 경우 타임스탬프 추가
-          if (!this.subtitles[id]) {
-            if (
-              window.timestampManager &&
-              typeof window.timestampManager.addTimestamp === "function"
-            ) {
-              try {
-                window.timestampManager.addTimestamp(id);
-              } catch (error) {
-                console.error("타임스탬프 추가 중 오류:", error);
+          // 텍스트가 비어있지 않은 경우만 처리
+          if (text && text.trim().length > 0) {
+            // 줄바꿈 제거 및 공백 정리
+            text = text
+              .replace(/\r?\n|\r/g, " ")
+              .trim()
+              .replace(/\s+/g, " ");
+
+            // 새 자막인 경우만 등록 (같은 ID에 대해 내용이 바뀐 경우 업데이트)
+            if (!this.subtitles[id] || this.subtitles[id] !== text) {
+              // 새 자막인 경우 타임스탬프 추가
+              if (
+                !this.subtitles[id] &&
+                window.timestampManager &&
+                typeof window.timestampManager.addTimestamp === "function"
+              ) {
+                try {
+                  window.timestampManager.addTimestamp(id);
+                } catch (error) {
+                  console.error("타임스탬프 추가 중 오류:", error);
+                }
+              }
+
+              // 자막 저장
+              this.subtitles[id] = text;
+
+              // 자막 요소 업데이트 또는 추가
+              let existEl = document.getElementById(id);
+              if (existEl) {
+                // 기존 요소가 있으면 텍스트만 업데이트
+                existEl.innerText = text;
+              } else {
+                // 새 요소 생성
+                let p = document.createElement("p");
+                p.style.lineHeight = "20px";
+                p.style.fontSize = "15px";
+                p.style.margin = "0 0 4px 0";
+                p.innerText = text;
+                p.id = id;
+                container.appendChild(p);
               }
             }
           }
-
-          // 자막 저장
-          this.subtitles[id] = text;
-
-          // 자막 요소 업데이트 또는 추가
-          let existEl = document.getElementById(id);
-          if (existEl) {
-            // 기존 요소가 있으면 텍스트만 업데이트
-            existEl.innerText = text;
-          } else {
-            // 새 요소 생성
-            let p = document.createElement("p");
-            p.style.lineHeight = "20px";
-            p.style.fontSize = "15px";
-            p.style.margin = "0 0 4px 0"; // 아래쪽 여백 추가, 위쪽 여백 제거
-            p.innerText = text;
-            p.id = id;
-            container.appendChild(p);
-
-            // 새 자막 추가 후 바로 스크롤 (자막 컨테이너에만 적용)
-            if (this.autoScroll) {
-              container.scrollTop = container.scrollHeight;
-            }
-          }
+        });
+      } else {
+        // 다른 선택자로 자막 찾기
+        if (currentURL.includes("assembly.webcast.go.kr/main/player.asp")) {
+          subtitleElements = document.querySelectorAll(
+            ".caption_area .caption_text, [class*='subtitle'], [class*='caption']",
+          );
+        } else if (
+          currentURL.includes("assembly.webcast.go.kr/main/pressplayer.asp")
+        ) {
+          subtitleElements = document.querySelectorAll("#viewSubtit .smi_word");
+        } else if (currentURL.includes("assembly.webcast.go.kr/main/")) {
+          subtitleElements = document.querySelectorAll(
+            ".subtitle_wrap .subtitle_text, .subtitles-container .subtitle-item, [class*='subtitle']",
+          );
         }
-      });
+
+        // 다른 자막 요소 처리
+        if (subtitleElements.length > 0) {
+          subtitleElements.forEach((element) => {
+            // 다른 사이트에서는 내용 기반으로 ID 생성
+            let text = element.innerText;
+
+            // "로딩중.." 텍스트 제거
+            text = text.replace(/^로딩중\.\.\s*/g, "");
+
+            if (text && text.trim().length > 0) {
+              // 줄바꿈 제거 및 공백 처리
+              text = text
+                .replace(/\r?\n|\r/g, " ")
+                .trim()
+                .replace(/\s+/g, " ");
+
+              // 일관된 ID 생성
+              const id =
+                "subtitle_" + text.trim().replace(/\s+/g, "_").substring(0, 20);
+
+              // 중복 방지: 같은 ID에 대해 내용이 바뀐 경우만 업데이트
+              if (!this.subtitles[id] || this.subtitles[id] !== text) {
+                // 새 자막인 경우 타임스탬프 추가
+                if (
+                  !this.subtitles[id] &&
+                  window.timestampManager &&
+                  typeof window.timestampManager.addTimestamp === "function"
+                ) {
+                  try {
+                    window.timestampManager.addTimestamp(id);
+                  } catch (error) {
+                    console.error("타임스탬프 추가 중 오류:", error);
+                  }
+                }
+
+                // 자막 저장
+                this.subtitles[id] = text;
+
+                // UI에 자막 추가
+                let existEl = document.getElementById(id);
+                if (existEl) {
+                  existEl.innerText = text;
+                } else {
+                  let p = document.createElement("p");
+                  p.style.lineHeight = "20px";
+                  p.style.fontSize = "15px";
+                  p.style.margin = "0 0 4px 0";
+                  p.innerText = text;
+                  p.id = id;
+                  container.appendChild(p);
+                }
+              }
+            }
+          });
+        }
+      }
 
       // 마지막 부분에서 자동 스크롤 즉시 적용
       if (this.autoScroll && container) {
-        // 확실하게 가장 아래로 스크롤
         container.scrollTop = container.scrollHeight;
 
         // 약간의 딜레이 후 한 번 더 스크롤 (DOM 업데이트 완료 후)
@@ -659,21 +756,59 @@ class SubtitleCapture {
       // 세션 데이터 저장
       this.saveSessionData();
 
-      // 팝업에 업데이트 알림
-      chrome.runtime.sendMessage({
-        action: "updateSubtitles",
-        subtitles: this.subtitles,
-        sessionId: this.sessionId,
-      });
+      // 확장 프로그램 컨텍스트 유효성 검사
+      try {
+        // chrome과 runtime 객체가 있는지 확인
+        if (typeof chrome === 'undefined' || typeof chrome.runtime === 'undefined') {
+          console.warn(
+            "확장 프로그램 컨텍스트가 유효하지 않음, 메시지 전송 건너뜀",
+          );
+          return;
+        }
+
+        // 팝업에 업데이트 알림
+        chrome.runtime.sendMessage(
+          {
+            action: "updateSubtitles",
+            subtitles: this.subtitles,
+            sessionId: this.sessionId,
+            timestamps: window.timestampManager
+              ? window.timestampManager.timestamps
+              : {},
+            durations: window.timestampManager
+              ? window.timestampManager.durations
+              : {},
+          },
+          (response) => {
+            // 메시지 전송 후 오류 확인
+            if (chrome.runtime && chrome.runtime.lastError) {
+              console.warn(
+                "메시지 전송 중 오류:",
+                chrome.runtime.lastError.message,
+              );
+            }
+          },
+        );
+      } catch (error) {
+        console.error("자막 업데이트 전송 중 오류:", error);
+
+        // 확장 프로그램 컨텍스트 오류인 경우 특별 처리
+        if (
+          error.message &&
+          error.message.includes("Extension context invalidated")
+        ) {
+          console.warn(
+            "확장 프로그램 컨텍스트가 무효화되었습니다. 새로고침 또는 재활성화가 필요합니다.",
+          );
+        }
+      }
     } catch (error) {
-      // Add error handling to prevent function from failing silently
       console.error("자막 캡처 중 오류 발생:", error);
     }
   }
 
   /**
    * 자막 컨테이너 업데이트
-   * Added missing closing bracket and properly implemented function
    */
   updateSubtitleContainer() {
     const container = document.querySelector("#hack_title");
@@ -743,7 +878,7 @@ class SubtitleCapture {
     chrome.runtime.sendMessage({
       action: "updateSubtitles",
       subtitles: this.subtitles,
-      sessionId: this.sessionId
+      sessionId: this.sessionId,
     });
 
     console.log("자막 정리 완료 - 줄바꿈 제거됨");
@@ -763,19 +898,21 @@ class SubtitleCapture {
 
 // 누락된 함수가 있을 경우 추가
 if (!SubtitleCapture.prototype.createSubtitleContainer) {
-  SubtitleCapture.prototype.createSubtitleContainer = function(videoContainer) {
+  SubtitleCapture.prototype.createSubtitleContainer = function (
+    videoContainer,
+  ) {
     console.log("자막 캡처 컨테이너 생성 (푸터 위 표시 모드)");
-    
+
     // 기존 컨테이너가 있으면 제거
     let existingContainer = document.querySelector("#hack_title");
     if (existingContainer) {
       existingContainer.remove();
     }
-    
+
     // 새 컨테이너 생성
     const container = document.createElement("div");
     container.id = "hack_title";
-    
+
     // 스타일 설정 - 푸터 바로 위에 표시
     container.style.position = "relative"; // fixed 대신 relative로 변경
     container.style.margin = "0";
@@ -791,23 +928,23 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
     container.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.1)";
     container.style.fontSize = "14px";
     container.style.lineHeight = "1.5";
-    
+
     // 스타일 시트 추가 - 줄무늬 효과
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
-      #hack_title p:nth-child(odd) {
-        background-color: #ffffff;
-        padding: 5px;
-        margin: 0;
-      }
-      #hack_title p:nth-child(even) {
-        background-color: #f3f3f3;
-        padding: 5px;
-        margin: 0;
-      }
-    `;
+                #hack_title p:nth-child(odd) {
+                  background-color: #ffffff;
+                  padding: 5px;
+                  margin: 0;
+                }
+                #hack_title p:nth-child(even) {
+                  background-color: #f3f3f3;
+                  padding: 5px;
+                  margin: 0;
+                }
+              `;
     document.head.appendChild(style);
-    
+
     // 헤더 추가
     const header = document.createElement("div");
     header.style.fontWeight = "bold";
@@ -819,7 +956,7 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
     header.style.marginBottom = "5px";
     header.innerText = "국회 의사중계 자막 (Hack Assembly)";
     container.appendChild(header);
-    
+
     // 닫기 버튼 추가 - 더 눈에 띄게 개선
     const closeButton = document.createElement("button");
     closeButton.innerText = "숨기기";
@@ -835,7 +972,7 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
     closeButton.style.fontWeight = "bold";
     closeButton.style.cursor = "pointer";
     closeButton.style.boxShadow = "0 1px 3px rgba(0,0,0,0.12)";
-    
+
     // 고정된 버튼을 위한 별도 컨테이너
     const fixedButtonContainer = document.createElement("div");
     fixedButtonContainer.id = "hack_title_fixed_button";
@@ -848,7 +985,7 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
     fixedButtonContainer.style.borderRadius = "4px";
     fixedButtonContainer.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.3)";
     fixedButtonContainer.style.padding = "5px 10px";
-    
+
     // 고정된 버튼 생성
     const fixedButton = document.createElement("button");
     fixedButton.innerText = closeButton.innerText; // 원래 버튼과 동일한 텍스트로 시작
@@ -861,10 +998,10 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
     fixedButton.style.fontWeight = "bold";
     fixedButton.style.cursor = "pointer";
     fixedButton.style.boxShadow = "0 1px 3px rgba(0,0,0,0.12)";
-    
+
     fixedButtonContainer.appendChild(fixedButton);
     document.body.appendChild(fixedButtonContainer);
-    
+
     // 버튼 호버 효과 함수
     const applyHoverEffect = (button) => {
       button.onmouseover = () => {
@@ -881,11 +1018,11 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
         }
       };
     };
-    
+
     // 두 버튼에 호버 효과 적용
     applyHoverEffect(closeButton);
     applyHoverEffect(fixedButton);
-    
+
     // 토글 함수 정의
     const toggleContainer = () => {
       if (container.style.height === "30px") {
@@ -908,20 +1045,23 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
         fixedButton.style.color = "white";
       }
     };
-    
+
     // 두 버튼에 클릭 이벤트 추가
     closeButton.onclick = toggleContainer;
     fixedButton.onclick = toggleContainer;
-    
+
     // 스크롤 이벤트 리스너 추가
-    window.addEventListener('scroll', () => {
+    window.addEventListener("scroll", () => {
       // 컨테이너가 화면에 표시되는지 확인
       const containerRect = container.getBoundingClientRect();
-      
+
       if (containerRect.top < 0 && containerRect.bottom > 0) {
         // 컨테이너가 아직 화면에 부분적으로 보이는 경우 (상단만 스크롤됨)
         fixedButtonContainer.style.display = "none";
-      } else if (containerRect.bottom <= 0 || containerRect.top >= window.innerHeight) {
+      } else if (
+        containerRect.bottom <= 0 ||
+        containerRect.top >= window.innerHeight
+      ) {
         // 컨테이너가 완전히 화면에서 벗어난 경우
         fixedButtonContainer.style.display = "block";
       } else {
@@ -929,24 +1069,25 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
         fixedButtonContainer.style.display = "none";
       }
     });
-    
+
     // 버튼을 header에 추가
     header.appendChild(closeButton);
-    
+
     // 내용 컨테이너 추가
     const contentContainer = document.createElement("div");
     contentContainer.style.overflow = "auto";
     contentContainer.style.maxHeight = "calc(100% - 30px)";
     container.appendChild(contentContainer);
-    
+
     // 푸터 바로 위에 컨테이너 추가 (페이지 내에 삽입)
     // 푸터 요소 찾기 시도
-    let footer = document.querySelector('footer') || 
-                document.querySelector('.footer') || 
-                document.querySelector('#footer') ||
-                document.querySelector('[class*="footer"]') ||
-                document.querySelector('[id*="footer"]');
-    
+    let footer =
+      document.querySelector("footer") ||
+      document.querySelector(".footer") ||
+      document.querySelector("#footer") ||
+      document.querySelector('[class*="footer"]') ||
+      document.querySelector('[id*="footer"]');
+
     if (footer) {
       // 푸터 바로 앞에 삽입
       footer.parentNode.insertBefore(container, footer);
@@ -954,10 +1095,10 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
       // 푸터를 찾지 못했으면 body의 맨 끝에 삽입
       document.body.appendChild(container);
     }
-    
+
     // 원래 컨테이너에 추가하는 대신 contentContainer에 추가하도록 오버라이드
     const originalAppendChild = container.appendChild;
-    container.appendChild = function(el) {
+    container.appendChild = function (el) {
       // 헤더와 contentContainer가 아닌 경우에만 contentContainer에 추가
       if (el !== header && el !== contentContainer && el !== closeButton) {
         return contentContainer.appendChild(el);
@@ -965,36 +1106,85 @@ if (!SubtitleCapture.prototype.createSubtitleContainer) {
         return originalAppendChild.call(this, el);
       }
     };
-    
+
     console.log("자막 캡처 컨테이너 생성 완료 (푸터 위 표시 모드)");
   };
 }
 
 if (!SubtitleCapture.prototype.loadSessionData) {
-  SubtitleCapture.prototype.loadSessionData = function() {
+  SubtitleCapture.prototype.loadSessionData = function () {
     console.log("세션 데이터 로드");
-    
-    chrome.storage.local.get([`session_${this.sessionId}`], (result) => {
-      const sessionData = result[`session_${this.sessionId}`];
-      
-      if (sessionData) {
-        // 자막 데이터 로드
-        this.subtitles = sessionData.subtitles || {};
-        
-        // 타임스탬프 데이터 로드
-        if (window.timestampManager && sessionData.timestamps) {
-          window.timestampManager.timestamps = sessionData.timestamps;
+
+    // 확장 프로그램 컨텍스트 유효성 검사
+    if (typeof chrome === 'undefined' || typeof chrome.storage === 'undefined') {
+      console.warn("확장 프로그램 컨텍스트가 유효하지 않음, 세션 데이터 로드 건너뜀");
+      return;
+    }
+
+    try {
+      chrome.storage.local.get([`session_${this.sessionId}`], (result) => {
+        // 저장 완료 후 chrome.runtime.lastError 확인
+        if (chrome.runtime && chrome.runtime.lastError) {
+          console.warn(
+            "세션 데이터 로드 중 오류:",
+            chrome.runtime.lastError.message
+          );
+          return;
         }
-        
-        if (window.timestampManager && sessionData.durations) {
-          window.timestampManager.durations = sessionData.durations;
+
+        const sessionData = result[`session_${this.sessionId}`];
+
+        if (sessionData) {
+          // 자막 데이터 로드
+          this.subtitles = sessionData.subtitles || {};
+
+          // 타임스탬프 데이터 로드
+          if (window.timestampManager && sessionData.timestamps) {
+            window.timestampManager.timestamps = sessionData.timestamps;
+          }
+
+          if (window.timestampManager && sessionData.durations) {
+            window.timestampManager.durations = sessionData.durations;
+          }
+
+          console.log(
+            `세션 데이터 로드 완료: ${this.sessionId}, 자막 수: ${Object.keys(this.subtitles).length}`,
+          );
+        } else {
+          console.log(`세션 데이터 없음: ${this.sessionId}`);
         }
-        
-        console.log(`세션 데이터 로드 완료: ${this.sessionId}, 자막 수: ${Object.keys(this.subtitles).length}`);
-      } else {
-        console.log(`세션 데이터 없음: ${this.sessionId}`);
+      });
+    } catch (error) {
+      console.error("세션 데이터 로드 중 오류 발생:", error);
+    }
+  };
+}
+
+// 먼저 utils 사용 가능 여부 확인
+if (typeof window.utils === "undefined") {
+  console.warn("utils 객체가 아직 로드되지 않았습니다. 임시 객체 생성");
+  // 최소한의 utils 객체 임시 생성
+  window.utils = {
+    showNotification: function(message, type) {
+      console.log(`[알림 - ${type}]: ${message}`);
+      try {
+        chrome.runtime.sendMessage({
+          action: "showNotification",
+          message: message,
+          type: type
+        });
+      } catch (e) {
+        console.error("알림 메시지 전송 실패:", e);
       }
-    });
+    },
+    formatSrtTimestamp: function(date) {
+      if (!date || !(date instanceof Date)) return "00:00:00,000";
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
+      return `${hours}:${minutes}:${seconds},${milliseconds}`;
+    }
   };
 }
 
@@ -1011,8 +1201,12 @@ if (
 }
 
 // 명시적으로 전역 객체(window)에 할당
-window.subtitleCapture = new SubtitleCapture();
-console.log("capture.js: window.subtitleCapture 객체 생성됨");
+try {
+  window.subtitleCapture = new SubtitleCapture();
+  console.log("capture.js: window.subtitleCapture 객체 생성됨");
 
-// 전역 범위에도 할당 (legacy 지원용)
-this.subtitleCapture = window.subtitleCapture;
+  // 전역 범위에도 할당 (legacy 지원용)
+  this.subtitleCapture = window.subtitleCapture;
+} catch (error) {
+  console.error("subtitleCapture 객체 생성 중 오류:", error);
+}
